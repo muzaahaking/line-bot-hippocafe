@@ -1,152 +1,63 @@
 <?php
+
+$API_URL = 'https://api.line.me/v2/bot/message/reply';
+$ACCESS_TOKEN = '6tkhGDSGLWgO6ncIEjKWjMnjhc6xel6mE3scQTbNjuqo1nKN5rPcvYkzkqIhmbIWyfTEsoM4sHwyUAy/3koVFEC+mS8DKuhzRLeq8WKSTg4H/tCvAFL4EV/MU4ad9aIiokhZaRp7PFGWKdMRupAuMQdB04t89/1O/w1cDnyilFU='; // Access Token ค่าที่เราสร้างขึ้น
+$POST_HEADER = array('Content-Type: application/json', 'Authorization: Bearer ' . $ACCESS_TOKEN);
+
+$request = file_get_contents('php://input');   // Get request content
+$request_array = json_decode($request, true);   // Decode JSON to Array
+
+if ( sizeof($request_array['events']) > 0 )
 {
-  "type": "bubble",
-  "hero": {
-    "type": "image",
-    "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
-    "size": "full",
-    "aspectRatio": "20:13",
-    "aspectMode": "cover",
-    "action": {
-      "type": "uri",
-      "uri": "http://linecorp.com/"
-    }
-  },
-  "body": {
-    "type": "box",
-    "layout": "vertical",
-    "contents": [
-      {
-        "type": "text",
-        "text": "Brown Cafe",
-        "weight": "bold",
-        "size": "xl"
-      },
-      {
-        "type": "box",
-        "layout": "baseline",
-        "margin": "md",
-        "contents": [
-          {
-            "type": "icon",
-            "size": "sm",
-            "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
-          },
-          {
-            "type": "icon",
-            "size": "sm",
-            "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
-          },
-          {
-            "type": "icon",
-            "size": "sm",
-            "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
-          },
-          {
-            "type": "icon",
-            "size": "sm",
-            "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
-          },
-          {
-            "type": "icon",
-            "size": "sm",
-            "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gray_star_28.png"
-          },
-          {
-            "type": "text",
-            "text": "4.0",
-            "size": "sm",
-            "color": "#999999",
-            "margin": "md",
-            "flex": 0
-          }
-        ]
-      },
-      {
-        "type": "box",
-        "layout": "vertical",
-        "margin": "lg",
-        "spacing": "sm",
-        "contents": [
-          {
-            "type": "box",
-            "layout": "baseline",
-            "spacing": "sm",
-            "contents": [
-              {
-                "type": "text",
-                "text": "Place",
-                "color": "#aaaaaa",
-                "size": "sm",
-                "flex": 1
-              },
-              {
-                "type": "text",
-                "text": "Miraina Tower, 4-1-6 Shinjuku, Tokyo",
-                "wrap": true,
-                "color": "#666666",
-                "size": "sm",
-                "flex": 5
-              }
-            ]
-          },
-          {
-            "type": "box",
-            "layout": "baseline",
-            "spacing": "sm",
-            "contents": [
-              {
-                "type": "text",
-                "text": "Time",
-                "color": "#aaaaaa",
-                "size": "sm",
-                "flex": 1
-              },
-              {
-                "type": "text",
-                "text": "10:00 - 23:00",
-                "wrap": true,
-                "color": "#666666",
-                "size": "sm",
-                "flex": 5
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "footer": {
-    "type": "box",
-    "layout": "vertical",
-    "spacing": "sm",
-    "contents": [
-      {
-        "type": "button",
-        "style": "link",
-        "height": "sm",
-        "action": {
-          "type": "uri",
-          "label": "CALL",
-          "uri": "https://linecorp.com"
-        }
-      },
-      {
-        "type": "button",
-        "style": "link",
-        "height": "sm",
-        "action": {
-          "type": "uri",
-          "label": "WEBSITE",
-          "uri": "https://linecorp.com"
-        }
-      },
-      {
-        "type": "spacer",
-        "size": "sm"
-      }
-    ],
-    "flex": 0
+
+ foreach ($request_array['events'] as $event)
+ {
+  $reply_message = '';
+  $reply_token = $event['replyToken'];
+
+  if ( $event['type'] == 'message' ) 
+  {
+   if( $event['message']['type'] == 'text' )
+   {
+    $text = $event['message']['text'];
+    $reply_message = 'ระบบได้รับข้อความ ('.$text.') ของคุณแล้ว';
+   }
+   else
+    $reply_message = 'ระบบได้รับ '.ucfirst($event['message']['type']).' ของคุณแล้ว';
+  
   }
+  else
+   $reply_message = 'ระบบได้รับ Event '.ucfirst($event['type']).' ของคุณแล้ว';
+ 
+  if( strlen($reply_message) > 0 )
+  {
+   //$reply_message = iconv("tis-620","utf-8",$reply_message);
+   $data = [
+    'replyToken' => $reply_token,
+    'messages' => [['type' => 'text', 'text' => $reply_message]]
+   ];
+   $post_body = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+   $send_result = send_reply_message($API_URL, $POST_HEADER, $post_body);
+   echo "Result: ".$send_result."\r\n";
+  }
+ }
 }
+
+echo "OK";
+
+function send_reply_message($url, $post_header, $post_body)
+{
+ $ch = curl_init($url);
+ curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+ curl_setopt($ch, CURLOPT_HTTPHEADER, $post_header);
+ curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+ curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+ $result = curl_exec($ch);
+ curl_close($ch);
+
+ return $result;
+}
+
 ?>
